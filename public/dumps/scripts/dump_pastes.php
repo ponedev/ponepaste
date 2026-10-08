@@ -28,7 +28,12 @@ $db = new PDO("mysql:host=localhost;dbname=ponepaste_beta;charset=utf8mb4", $PP_
     PDO::ATTR_EMULATE_PREPARES => false
 ]);
 $outfile = fopen("{$outpath}/pastes.csv", 'w');
-$resp = $db->query("SELECT pastes.id, title, pastes.content, pastes.created_at, pastes.updated_at, users.username, pastes.encrypt
+$resp = $db->query("SELECT pastes.id, title, pastes.content, pastes.created_at, pastes.updated_at, users.username,
+                (SELECT GROUP_CONCAT(tags.name ORDER BY tags.name SEPARATOR ', ')
+                 FROM paste_taggings
+                 INNER JOIN tags ON tags.id = paste_taggings.tag_id
+                 WHERE paste_taggings.paste_id = pastes.id) AS tags,
+                pastes.encrypt
 	            	FROM pastes
 			INNER JOIN users ON users.id = pastes.user_id
 			WHERE pastes.visible < 2 AND (NOT pastes.is_hidden) AND pastes.password is NULL");
@@ -39,7 +44,7 @@ $reencoded = 0;
 
 while ($row = $resp->fetch()) {
     list($paste_id, $paste_title, $paste_content,
-        $paste_created_at, $paste_updated_at, $paste_author, $paste_encrypt) = $row;
+        $paste_created_at, $paste_updated_at, $paste_author, $paste_tags, $paste_encrypt) = $row;
 
     if ($paste_encrypt) {
         $paste_content = @openssl_decrypt($paste_content, 'AES-256-CBC', $PP_ENCRYPTION_KEY);
@@ -51,7 +56,7 @@ while ($row = $resp->fetch()) {
     }
 
     /* skip empty pastes with the title "Removed by moderator" */
-    if ($paste_title === "Removed by moderator" && $paste_content === "") {
+    if ($paste_title === "Removed by moderator" && $paste_content === "" && empty($paste_tags)) {
         $skipped++;
         continue;
     }
@@ -66,7 +71,7 @@ while ($row = $resp->fetch()) {
     $paste_content = htmlspecialchars_decode($paste_content);
     $paste_content = str_replace("\r\n", "\n", $paste_content);
 
-    fputcsv($outfile, [$paste_id, $paste_title, $paste_created_at, $paste_updated_at, $paste_author]);
+    fputcsv($outfile, [$paste_id, $paste_title, $paste_created_at, $paste_updated_at, $paste_author, $paste_tags]);
 
     $pastefile = fopen("{$outpath}/data/{$paste_id}", 'w');
     fwrite($pastefile, $paste_content);
