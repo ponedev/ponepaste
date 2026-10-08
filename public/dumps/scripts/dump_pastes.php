@@ -28,10 +28,10 @@ $db = new PDO("mysql:host=localhost;dbname=ponepaste_beta;charset=utf8mb4", $PP_
     PDO::ATTR_EMULATE_PREPARES => false
 ]);
 $outfile = fopen("{$outpath}/pastes.csv", 'w');
-$resp = $db->query("SELECT pastes.id, title, pastes.content, pastes.created_at, pastes.updated_at, users.username
+$resp = $db->query("SELECT pastes.id, title, pastes.content, pastes.created_at, pastes.updated_at, users.username, pastes.encrypt
 	            	FROM pastes
 			INNER JOIN users ON users.id = pastes.user_id
-			WHERE pastes.visible < 2 AND (NOT pastes.is_hidden)");
+			WHERE pastes.visible < 2 AND (NOT pastes.is_hidden) AND pastes.password is NULL");
 
 $dumped = 0;
 $skipped = 0;
@@ -39,11 +39,19 @@ $reencoded = 0;
 
 while ($row = $resp->fetch()) {
     list($paste_id, $paste_title, $paste_content,
-        $paste_created_at, $paste_updated_at, $paste_author) = $row;
+        $paste_created_at, $paste_updated_at, $paste_author, $paste_encrypt) = $row;
 
-    $paste_content = @openssl_decrypt($paste_content, 'AES-256-CBC', $PP_ENCRYPTION_KEY);
-    if ($paste_content === false) {
-        fwrite(STDERR, "paste {$paste_id}: failed to decrypt, skipping\n");
+    if ($paste_encrypt) {
+        $paste_content = @openssl_decrypt($paste_content, 'AES-256-CBC', $PP_ENCRYPTION_KEY);
+        if ($paste_content === false) {
+            fwrite(STDERR, "paste {$paste_id}: failed to decrypt, skipping\n");
+            $skipped++;
+            continue;
+        }
+    }
+
+    /* skip empty pastes with the title "Removed by moderator" */
+    if ($paste_title === "Removed by moderator" && $paste_content === "") {
         $skipped++;
         continue;
     }
