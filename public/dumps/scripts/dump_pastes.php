@@ -65,7 +65,7 @@ $skipped = 0;
 $reencoded = 0;
 
 /* Put the header into the CSV file */
-fputcsv(stream: $outfile, fields: ['id', 'title', 'code', 'created_at', 'updated_at', 'author', 'tags'], separator: ',', enclosure: '"', escape: "");
+fputcsv(stream: $outfile, fields: ['id', 'title', 'format', 'created_at', 'updated_at', 'author', 'tags'], separator: ',', enclosure: '"', escape: "");
 
 while ($row = $resp->fetch()) {
     list($paste_id, $paste_title, $paste_code, $paste_content,

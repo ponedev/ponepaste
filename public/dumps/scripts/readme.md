@@ -45,6 +45,6 @@ Old dated dumps are removed according to the retention policy: the earliest dump
 
 ## Archive format
 
-Once extracted from the .tar.gz, you see pastes.csv file. See it's header row for the column names/order. The `code` column contains the format (plaintext/green/pastedown). The `tags` contain comma-separated tags associated with the paste.
+Once extracted from the .tar.gz, you see pastes.csv file. See it's header row for the column names/order. The `format` column contains the desired rendering format of the paste (plaintext/green/pastedown). The `tags` contain comma-separated tags associated with the paste. The rest is self explanatory.
 
 The remaining files in the `data` directory correspond to the individual pastes, named by their paste ID.
