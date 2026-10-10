@@ -28,7 +28,7 @@ $db = new PDO("mysql:host=localhost;dbname=ponepaste_beta;charset=utf8mb4", $PP_
     PDO::ATTR_EMULATE_PREPARES => false
 ]);
 $outfile = fopen("{$outpath}/pastes.csv", 'w');
-$resp = $db->query("SELECT pastes.id, title, pastes.content, pastes.created_at, pastes.updated_at, users.username,
+$resp = $db->query("SELECT pastes.id, pastes.title, pastes.code, pastes.content, pastes.created_at, pastes.updated_at, users.username,
                 (SELECT GROUP_CONCAT(tags.name ORDER BY tags.name SEPARATOR ', ')
                  FROM paste_taggings
                  INNER JOIN tags ON tags.id = paste_taggings.tag_id
@@ -42,8 +42,11 @@ $dumped = 0;
 $skipped = 0;
 $reencoded = 0;
 
+/* Put the header into the CSV file */
+fputcsv($outfile, ['id', 'title', 'code', 'created_at', 'updated_at', 'author', 'tags']);
+
 while ($row = $resp->fetch()) {
-    list($paste_id, $paste_title, $paste_content,
+    list($paste_id, $paste_title, $paste_code, $paste_content,
         $paste_created_at, $paste_updated_at, $paste_author, $paste_tags, $paste_encrypt) = $row;
 
     if ($paste_encrypt) {
@@ -71,7 +74,17 @@ while ($row = $resp->fetch()) {
     $paste_content = htmlspecialchars_decode($paste_content);
     $paste_content = str_replace("\r\n", "\n", $paste_content);
 
-    fputcsv($outfile, [$paste_id, $paste_title, $paste_created_at, $paste_updated_at, $paste_author, $paste_tags]);
+    $paste_code = match ($paste_code) {
+            'text', 'plaintext' => 'plaintext',
+            'pastedown_old', 'pastedown' => 'pastedown',
+            default => 'green',
+    };
+
+    if ($paste_updated_at === null || $paste_updated_at === '') {
+        $paste_updated_at = $paste_created_at;
+    }
+
+    fputcsv($outfile, [$paste_id, $paste_title, $paste_code, $paste_created_at, $paste_updated_at, $paste_author, $paste_tags]);
 
     $pastefile = fopen("{$outpath}/data/{$paste_id}", 'w');
     fwrite($pastefile, $paste_content);
