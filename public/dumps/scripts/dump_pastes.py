@@ -67,7 +67,6 @@ def clean_old_archives(dump_dir: Path):
 
 def main(dump_dir: Path, dump_script: Path):
     today = datetime.date.today().isoformat()
-    today = "2026-12-12" # override today's date for testing purposes
     today_archive = dump_dir / f"{today}.tar.gz"
 
     if today_archive.exists():
