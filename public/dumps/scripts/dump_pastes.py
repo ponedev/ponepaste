@@ -66,6 +66,7 @@ def clean_old_archives(dump_dir: Path):
 
 
 def main(dump_dir: Path, dump_script: Path):
+    # Do not change it from isoformat to another! Else sorting by name breaks. 
     today = datetime.date.today().isoformat()
     today_archive = dump_dir / f"{today}.tar.gz"
 
