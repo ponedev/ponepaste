@@ -4,16 +4,38 @@ if (php_sapi_name() !== 'cli') {
     die;
 }
 
-/* SELECT pastes.id, title, pastes.content, created_at, updated_at,users.username FROM pastes INNER JOIN users ON users.id = pastes.user_id WHERE visible = '0'; */
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-$PP_ENCRYPTION_KEY = getenv('PP_ENCRYPTION_KEY') ?: '';
-$PP_USER = 'ponepaste';
+$PP_ENCRYPTION_KEY = getenv('PP_ENCRYPTION_KEY');
+$PP_USER = getenv('PP_USER');
 $PP_PASS = getenv('PP_PASS');
+$PP_DATABASE_SERVER = getenv('PP_DATABASE_SERVER');
+$PP_DATABASE = getenv('PP_DATABASE');
 
 if (count($argv) !== 2) {
     echo "usage: {$argv[0]} <outpath>\n";
+    exit(1);
+}
+
+if (!$PP_ENCRYPTION_KEY) {
+    fwrite(STDERR, "PP_ENCRYPTION_KEY environment variable is not set\n");
+    exit(1);
+}
+if (!$PP_USER) {
+    fwrite(STDERR, "PP_USER environment variable is not set\n");
+    exit(1);
+}
+if (!$PP_PASS) {
+    fwrite(STDERR, "PP_PASS environment variable is not set\n");
+    exit(1);
+}
+if (!$PP_DATABASE_SERVER) {
+    fwrite(STDERR, "PP_DATABASE_SERVER environment variable is not set\n");
+    exit(1);
+}
+if (!$PP_DATABASE) {
+    fwrite(STDERR, "PP_DATABASE environment variable is not set\n");
     exit(1);
 }
 
@@ -22,7 +44,7 @@ $outpath = $argv[1];
 mkdir($outpath);
 mkdir("${outpath}/data/");
 
-$db = new PDO("mysql:host=localhost;dbname=ponepaste_beta;charset=utf8mb4", $PP_USER, $PP_PASS, [
+$db = new PDO("mysql:host={$PP_DATABASE_SERVER};dbname={$PP_DATABASE};charset=utf8mb4", $PP_USER, $PP_PASS, [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NUM,
     PDO::ATTR_EMULATE_PREPARES => false
