@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-# Script to dump pastes from the ponepaste database daily
+# Script to dump pastes from the ponepaste database daily (or less frequently).
 # Dumps are stored in the dump_dir directory and old dumps are cleaned up according to the retention policy.
 # Retention policy keeps the earliest dump, the most recent dump, the earliest dump of each month and all delta files.
 
 # Usage: dump_pastes.py <path to dump target directory> <path to dump_pastes.php>
 # Example: dump_pastes.py /path/to/dump/dir /path/to/dump_pastes.php
-# This script should be run daily to maintain an up-to-date archive of pastes.
+# This script should be run daily to maintain an up-to-date archive of pastes, but
+# it handles if it isn't executed daily (generates the delta between the previous and the current dump).
 # Required environment variables (exported):
 # - PP_ENCRYPTION_KEY - encryption key for the ponepaste database
 # - PP_USER - database user for the ponepaste database

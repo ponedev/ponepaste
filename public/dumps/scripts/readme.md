@@ -39,9 +39,11 @@ The destination directory must already exist. Run the Python script with that di
 python3 ./dump_pastes.py /path/to/dump-directory ./dump_pastes.php
 ```
 
-Run it daily. Each run creates a `yyyy-MM-dd.tar.gz` dump; if that date's archive already exists, the script exits without creating another. After the initial dump, each run also creates an `.xdelta3` incremental file from the newest dated dump to the new one. `latest.tar.gz` is refreshed to contain the newest dump.
+Each run creates a `yyyy-MM-dd.tar.gz` dump; if that date's archive already exists, the script exits without creating another. After the initial dump, each run also creates an `.xdelta3` incremental file from the newest dated dump to the new one. `latest.tar.gz` is refreshed to contain the newest dump.
 
-Old dated dumps are removed according to the retention policy: the earliest dump, the newest dump, and the earliest dump of each month are kept. Incremental `.xdelta3` files are not removed by this cleanup.
+Old dated dumps are removed according to the retention policy: the earliest dump, the newest dump, and the earliest dump of each month are kept. Incremental `.xdelta3` files are not removed by this clean-up.
+
+Recommended to run it daily, but handles if it is ran less frequently.
 
 ## Archive format
 
