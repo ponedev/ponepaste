@@ -65,7 +65,7 @@ $skipped = 0;
 $reencoded = 0;
 
 /* Put the header into the CSV file */
-fputcsv($outfile, ['id', 'title', 'code', 'created_at', 'updated_at', 'author', 'tags']);
+fputcsv(stream: $outfile, fields: ['id', 'title', 'code', 'created_at', 'updated_at', 'author', 'tags'], separator: ',', enclosure: '"', escape: "");
 
 while ($row = $resp->fetch()) {
     list($paste_id, $paste_title, $paste_code, $paste_content,
@@ -106,7 +106,7 @@ while ($row = $resp->fetch()) {
         $paste_updated_at = $paste_created_at;
     }
 
-    fputcsv($outfile, [$paste_id, $paste_title, $paste_code, $paste_created_at, $paste_updated_at, $paste_author, $paste_tags]);
+    fputcsv(stream: $outfile, fields: [$paste_id, $paste_title, $paste_code, $paste_created_at, $paste_updated_at, $paste_author, $paste_tags], separator: ',', enclosure: '"', escape: "");
 
     $pastefile = fopen("{$outpath}/data/{$paste_id}", 'w');
     fwrite($pastefile, $paste_content);

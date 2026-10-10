@@ -95,7 +95,7 @@ def main(dump_dir: Path, dump_script: Path):
 
             print("Compressing the dump")
             subprocess.run(
-                ["tar", "-czf", str(archive), php_dump_dir],
+                ["tar", "-czf", str(archive), today],
                 cwd=workdir,
                 check=True,
             )
