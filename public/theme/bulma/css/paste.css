@@ -40,10 +40,12 @@
 @keyframes linked-element-highlight {
     from {
         background-color: gray;
+        border-radius: 5px;
     }
 
     to {
         background-color: unset;
+        border-radius: 5px;
     }
 }
 
