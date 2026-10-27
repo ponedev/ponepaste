@@ -14,6 +14,81 @@ class Pastedown extends ParsedownExtra {
         $this->inlineMarkerList .= '>@';
     }
 
+    protected function buildFootnoteElement()
+    {
+        $element = [
+            'name' => 'div',
+            'attributes' => ['class' => 'footnotes'],
+            'handler' => 'elements',
+            'allowRawHtmlInSafeMode' => true,
+            'text' => [
+                ['name' => 'hr'],
+                [
+                    'name' => 'ol',
+                    'handler' => 'elements',
+                    'allowRawHtmlInSafeMode' => true,
+                    'text' => [],
+                ],
+            ],
+        ];
+
+        uasort($this->DefinitionData['Footnote'], 'self::sortFootnotes');
+
+        foreach ($this->DefinitionData['Footnote'] as $definitionId => $definitionData) {
+            if (!isset($definitionData['number'])) {
+                continue;
+            }
+
+            $text = parent::text($definitionData['text']);
+            if (strpos($text, '<p>') === 0) {
+                $text = '<p>' . $definitionData['number'] . '. ' . substr($text, 3);
+            } else {
+                $text = $definitionData['number'] . '. ' . $text;
+            }
+
+            $backLinksMarkup = '';
+            $escapedDefinitionId = self::escape($definitionId);
+
+            foreach (range(1, $definitionData['count']) as $number) {
+                $backLinksMarkup .= ' <a href="#fnref' . $number . ':' . $escapedDefinitionId
+                    . '" rev="footnote" class="footnote-backref">&#8617;</a>';
+            }
+
+            $backLinksMarkup = substr($backLinksMarkup, 1);
+
+            if (substr($text, -4) === '</p>') {
+                $text = substr_replace($text, '&#160;' . $backLinksMarkup . '</p>', -4);
+            } else {
+                $text .= "\n" . '<p>' . $backLinksMarkup . '</p>';
+            }
+
+            $element['text'][1]['text'][] = [
+                'name' => 'li',
+                'attributes' => ['id' => 'fn:' . $definitionId],
+                'rawHtml' => "\n" . $text . "\n",
+                'allowRawHtmlInSafeMode' => true,
+            ];
+        }
+
+        return $element;
+    }
+
+    protected function inlineFootnoteMarker($Excerpt)
+    {
+        $marker = parent::inlineFootnoteMarker($Excerpt);
+
+        if (!isset($marker)) {
+            return null;
+        }
+
+        $element = $marker['element'];
+        $element['element'] = $element['text'];
+        unset($element['handler'], $element['text']);
+        $marker['element'] = $element;
+
+        return $marker;
+    }
+
     protected function inlineGreentext($Line)
     {
         if ($this->isLineStart($Line) && preg_match('/^>[ ]?(.*?)( {2,})?(?=\n|$)/', $Line['text'], $matches)) {

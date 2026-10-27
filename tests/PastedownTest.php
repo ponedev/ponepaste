@@ -49,6 +49,46 @@ final class PastedownTest extends TestCase
         );
     }
 
+    public function testFootnotesRenderInSafeMode(): void
+    {
+        $parser = new Pastedown();
+        $parser->setSafeMode(true);
+        $html = $parser->text(<<<'MARKDOWN'
+Here's a simple footnote,[^1] and here's a longer one.[^bignote]
+
+[^1]: This is the first footnote.
+
+[^bignote]: Here's one with multiple paragraphs and code.
+
+    Indent paragraphs to include them in the footnote.
+
+    `{ my code }`
+
+    Add as many paragraphs as you like.
+MARKDOWN);
+
+        self::assertStringContainsString('<a href="#fn%3A1" class="footnote-ref">1</a>', $html);
+        self::assertStringContainsString('<div class="footnotes">', $html);
+        self::assertStringContainsString('<p>1. This is the first footnote.', $html);
+        self::assertStringContainsString('<p>2. Here\'s one with multiple paragraphs and code.', $html);
+        self::assertStringContainsString(
+            '<a href="#fnref1:1" rev="footnote" class="footnote-backref">',
+            $html
+        );
+        self::assertStringContainsString('<code>{ my code }</code>', $html);
+        self::assertStringNotContainsString('&lt;a href="#fn%3A1"', $html);
+    }
+
+    public function testFootnoteRawHtmlRemainsEscapedInSafeMode(): void
+    {
+        $parser = new Pastedown();
+        $parser->setSafeMode(true);
+        $html = $parser->text('[^1]' . "\n\n" . '[^1]: <script>alert(1)</script>');
+
+        self::assertStringNotContainsString('<script>', $html);
+        self::assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
+    }
+
     public function testGreentextInline(): void
     {
         $html = (new Pastedown())->text('inline is not greentext >hello');
