@@ -23,6 +23,21 @@
     color: white !important;
 }
 
+#paste.pastedown [id^="fn:"]:target,
+#paste.pastedown [id^="fnref"]:target {
+    animation: footnote-highlight 2s ease-out;
+}
+
+@keyframes footnote-highlight {
+    from {
+        background-color: gray;
+    }
+
+    to {
+        background-color: unset;
+    }
+}
+
 .theme-switch-wrapper {
     display: flex;
     align-items: center;
