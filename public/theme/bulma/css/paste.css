@@ -25,10 +25,19 @@
 
 #paste.pastedown [id^="fn:"]:target,
 #paste.pastedown [id^="fnref"]:target {
-    animation: footnote-highlight 2s ease-out;
+    animation: linked-element-highlight 2s ease-out;
 }
 
-@keyframes footnote-highlight {
+#paste.pastedown h1:target,
+#paste.pastedown h2:target,
+#paste.pastedown h3:target,
+#paste.pastedown h4:target,
+#paste.pastedown h5:target,
+#paste.pastedown h6:target {
+    animation: linked-element-highlight 2s ease-out;
+}
+
+@keyframes linked-element-highlight {
     from {
         background-color: gray;
     }

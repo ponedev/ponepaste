@@ -89,6 +89,46 @@ MARKDOWN);
         self::assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
     }
 
+    public function testHeaderIdsMatchMarkdownLinkAnchors(): void
+    {
+        $html = (new Pastedown())->text(<<<'MARKDOWN'
+[1. Header One](#1-header-one)
+[2.2. Header Two](#22-header-two)
+
+# 1. Header One
+
+Some text
+
+# 2.2. Header Two
+
+Some other text
+MARKDOWN);
+
+        self::assertStringContainsString('<h1 id="1-header-one">1. Header One</h1>', $html);
+        self::assertStringContainsString('<h1 id="22-header-two">2.2. Header Two</h1>', $html);
+        self::assertStringContainsString('href="#1-header-one"', $html);
+        self::assertStringContainsString('href="#22-header-two"', $html);
+    }
+
+    public function testHeaderIdsAreUniqueAndRespectExplicitIds(): void
+    {
+        $html = (new Pastedown())->text(<<<'MARKDOWN'
+# Repeated Heading
+
+# Repeated Heading
+
+Setext Heading
+---
+
+# Explicit Heading {#custom-heading}
+MARKDOWN);
+
+        self::assertStringContainsString('<h1 id="repeated-heading">Repeated Heading</h1>', $html);
+        self::assertStringContainsString('<h1 id="repeated-heading-1">Repeated Heading</h1>', $html);
+        self::assertStringContainsString('<h2 id="setext-heading">Setext Heading</h2>', $html);
+        self::assertStringContainsString('<h1 id="custom-heading">Explicit Heading</h1>', $html);
+    }
+
     public function testGreentextInline(): void
     {
         $html = (new Pastedown())->text('inline is not greentext >hello');

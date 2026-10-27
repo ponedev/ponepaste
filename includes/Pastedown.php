@@ -4,6 +4,9 @@ namespace PonePaste;
 use ParsedownExtra;
 
 class Pastedown extends ParsedownExtra {
+    private $usedHeaderIds = [];
+    private $parsingText = false;
+
     public function __construct() {
         parent::__construct();
         unset($this->BlockTypes['>']);
@@ -12,6 +15,89 @@ class Pastedown extends ParsedownExtra {
         array_unshift($this->InlineTypes['<'], 'Redtext');
         $this->InlineTypes['@'] = ['Purpletext'];
         $this->inlineMarkerList .= '>@';
+    }
+
+    public function text($text)
+    {
+        $isTopLevelParse = !$this->parsingText;
+        if ($isTopLevelParse) {
+            $this->usedHeaderIds = [];
+            $this->parsingText = true;
+        }
+
+        try {
+            return parent::text($text);
+        } finally {
+            if ($isTopLevelParse) {
+                $this->parsingText = false;
+            }
+        }
+    }
+
+    protected function blockHeader($Line)
+    {
+        $Block = \Parsedown::blockHeader($Line);
+
+        if (!isset($Block)) {
+            return null;
+        }
+
+        return $this->addHeaderId($Block);
+    }
+
+    protected function blockSetextHeader($Line, ?array $Block = null)
+    {
+        $Block = \Parsedown::blockSetextHeader($Line, $Block);
+
+        if (!isset($Block)) {
+            return null;
+        }
+
+        return $this->addHeaderId($Block);
+    }
+
+    private function addHeaderId(array $Block): array
+    {
+        $element = &$Block['element'];
+        $headingText = $element['handler']['argument'];
+
+        if (preg_match('/[ #]*{(' . $this->regexAttribute . '+)}[ ]*$/', $headingText, $matches, PREG_OFFSET_CAPTURE)) {
+            $attributes = $this->parseAttributeData($matches[1][0]);
+            $element['attributes'] = array_merge($element['attributes'] ?? [], $attributes);
+            $headingText = substr($headingText, 0, $matches[0][1]);
+            $element['handler']['argument'] = $headingText;
+        }
+
+        if (isset($element['attributes']['id'])) {
+            $this->usedHeaderIds[$element['attributes']['id']] = true;
+        } else {
+            $element['attributes']['id'] = $this->generateHeaderId($headingText);
+        }
+
+        return $Block;
+    }
+
+    private function generateHeaderId(string $headingText): string
+    {
+        $headingText = preg_replace('/!\[([^\]]*)\]\([^)]*\)/', '$1', $headingText);
+        $headingText = preg_replace('/\[([^\]]+)\]\([^)]*\)/', '$1', $headingText);
+        $headingText = preg_replace('/`+(.+?)`+/', '$1', $headingText);
+        $headingText = html_entity_decode($headingText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $headingText = strip_tags($headingText);
+        $headingText = mb_strtolower($headingText, 'UTF-8');
+        $headingText = preg_replace('/[^\p{L}\p{N}\s-]/u', '', $headingText);
+        $slug = trim(preg_replace('/[\s-]+/u', '-', $headingText), '-');
+        $slug = $slug !== '' ? $slug : 'section';
+
+        $id = $slug;
+        $suffix = 1;
+        while (isset($this->usedHeaderIds[$id])) {
+            $id = $slug . '-' . $suffix++;
+        }
+
+        $this->usedHeaderIds[$id] = true;
+
+        return $id;
     }
 
     protected function buildFootnoteElement()
@@ -32,7 +118,10 @@ class Pastedown extends ParsedownExtra {
             ],
         ];
 
-        uasort($this->DefinitionData['Footnote'], 'self::sortFootnotes');
+        uasort(
+            $this->DefinitionData['Footnote'],
+            static fn($left, $right) => $left['number'] <=> $right['number']
+        );
 
         foreach ($this->DefinitionData['Footnote'] as $definitionId => $definitionData) {
             if (!isset($definitionData['number'])) {
